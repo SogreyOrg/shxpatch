@@ -1,6 +1,10 @@
 #pragma once
+#include <string>
+#include "Array.h"
+using std::string;
 
 class fontchrlink;
+
 //CAD字体读写、解析类
 class  ShapeFont
 {
@@ -8,7 +12,7 @@ public:
 	ShapeFont(void);
 	~ShapeFont(void);
 	bool Load(const char* fileName);
-	void Display(CDC* pDC,unsigned short charCode,int orgX,int orgY);//测试字体坐标解析
+	//void Display(CDC* pDC,unsigned short charCode,int orgX,int orgY);//测试字体坐标解析
 	fontchrlink* GetFromCode(unsigned short code);//查找字体
 	char GetFontType(){return m_type;}
 	fontchrlink* GetFromName(const char* symbolName);//查找字体

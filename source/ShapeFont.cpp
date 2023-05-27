@@ -61,8 +61,8 @@ bool ShapeFont::Load(const char* fileName)
 		//pFile.Close();
 		return false;
 	}
-
-	if(pFile.GetLength()<FONTHEADER)
+	unsigned long long filesize = pFile.GetLength();
+	if(filesize <FONTHEADER)
 	{
 		pFile.Close();
 		return false;
@@ -73,50 +73,46 @@ bool ShapeFont::Load(const char* fileName)
 	pFile.Read(head,FONTHEADER);
 	if (strnsame(head,"AutoCAD-86 shapes 1.",20))
 	{//SHAPE 1.0/1.1
-		fileType=2;
+		fileType = 2;
 		ReadShapes(pFile,head);
-
-		m_type =head[20]=='1'? SHAPE_1_1:SHAPE_1_0;
+		m_type = head[20] == '1' ? SHAPE_1_1 : SHAPE_1_0;
 	}
 	else if (strnsame(head,"AutoCAD-86 unifont 1.0\r\n\x1A",25))
 	{//unifont
-		fileType=3;		
-
+		fileType = 3;
 		ReadUnifont(pFile,head);//把已经读出的头信息传递,减少重复读取
-		m_type =UNIFONT;
-
+		m_type = UNIFONT;
 	}
 	else if (strnsame(head,"AutoCAD-86 bigfont 1.0\r\n\x1A"/*DNT*/,25))
 	{//bigfont
-		fileType=4;
-		m_type =BIGFONT;
+		fileType = 4;
+		m_type = BIGFONT;
 		ReadBigfont(pFile,head);
 	}
 	else 
 	{//SHP file
 		ReadSHP(pFile,head,fileType);
-
-
 	}
 
 	pFile.Close();
-	fontchrlink* link= GetFromCode('A');
-	if(link==NULL)return true;
-	CharData* pData= new CharData();
-	link->ShapeCreateVec(pData);
-	m_height= pData->m_charInfo.gmCellIncY;
-	link->m_dataPtr=pData;
 	return true;
 }
 
 fontchrlink* ShapeFont::GetFromName(const char* symbolName)
 {	
-	CString key(symbolName);
+	std::string key(symbolName);
 	for(int i=0;i<m_data.Count();i++)
 	{
 		fontchrlink* link= m_data[i];
 		if(link==NULL|| link->symbolName==NULL)continue;
-		if(key.CompareNoCase(link->symbolName)==0)
+
+		string linkSymbolNameTolower = link->symbolName;
+		transform(linkSymbolNameTolower.begin(), linkSymbolNameTolower.end(), linkSymbolNameTolower.begin(), tolower);
+
+		string keyToLower = key;
+		transform(keyToLower.begin(), keyToLower.end(), keyToLower.begin(), tolower);
+		
+		if(keyToLower == linkSymbolNameTolower)
 			return link;
 	}
 
@@ -397,7 +393,6 @@ bool ShapeFont::ReadBigfont(CFile& pFile,char* head)
 
 	//////////////////////////////////////////////////////////////////////////
 	//2.读取字体信息数据
-
 	m_data.resize(256);
 	for(int i=0;i<m_data.Count();i++)m_data[i]=NULL;
 	pFile.Seek(def1seek,SEEK_SET);
@@ -434,10 +429,14 @@ bool ShapeFont::ReadBigfont(CFile& pFile,char* head)
 		link->defsz=descLen-k;
 		link->def=new char[descLen-k];
 		memcpy(link->def,&temp[k],descLen-k);		
-		if(code>0&&code<256) m_data[code]=link;
+		if (code > 0 && code < 256) {
+			m_data[code] = link;
+		}
 		else
-		{			
-			CString mx;mx.Format("%X",code);
+		{
+			//CString mx;mx.Format("%X",code);
+			std::string mx;
+			mx = shxUtils::string_format("%X", code);
 			//AfxMessageBox(mx);
 			m_data.Add(link);
 		}
@@ -717,15 +716,19 @@ string ShapeFont::Patch(unsigned short charCode,float orgX,float orgY,float scX,
 				dy= link->def[++i]; 
 				while(link->def[i-1]||link->def[i])
 				{
-					curPt.x+=dx;curPt.y-=dy;
+					curPt.x+=dx;curPt.y-=dy; 
 					if(penDown){
 						float _x = orgX+curPt.x*scX;
 						float _y = orgY+curPt.y*scY;
 
-						CString sx;
-						sx.Format("%f",_x);
-						CString sy;
-						sy.Format("%f",_y);
+						//CString sx;
+						//sx.Format("%f",_x);
+						//CString sy;
+						//sy.Format("%f",_y);
+
+						std::string sx, sy;
+						sx = shxUtils::string_format("%f", _x);
+						sy = shxUtils::string_format("%f", _y);
 
 						res.append("lineto:");
 						res.append(sx + ",");
@@ -847,10 +850,14 @@ string ShapeFont::Patch(unsigned short charCode,float orgX,float orgY,float scX,
 						double x= cc[0] + r* cos(sa+step*i);						
 						double y= cc[1] + r* sin(sa+step*i);
 
-						CString sx;
-						sx.Format("%f",x);
-						CString sy;
-						sy.Format("%f",y);
+						//CString sx;
+						//sx.Format("%f",x);
+						//CString sy;
+						//sy.Format("%f",y);
+
+						std::string sx, sy;
+						sx = shxUtils::string_format("%f", x);
+						sy = shxUtils::string_format("%f", y);
 
 						res.append("lineto:");
 						res.append(sx + ",");
@@ -909,10 +916,14 @@ string ShapeFont::Patch(unsigned short charCode,float orgX,float orgY,float scX,
 			float _x = orgX+curPt.x;
 			float _y = orgY+curPt.y;
 
-			CString sx;
-			sx.Format("%f",_x);
-			CString sy;
-			sy.Format("%f",_y);
+			//CString sx;
+			//sx.Format("%f",_x);
+			//CString sy;
+			//sy.Format("%f",_y);
+
+			std::string sx, sy;
+			sx = shxUtils::string_format("%f", _x);
+			sy = shxUtils::string_format("%f", _y);
 
 			res.append("moveto:");
 			res.append(sx + ",");
@@ -927,10 +938,14 @@ string ShapeFont::Patch(unsigned short charCode,float orgX,float orgY,float scX,
 				float _x = orgX+curPt.x;
 				float _y = orgY+curPt.y;
 
-				CString sx;
-				sx.Format("%f",_x);
-				CString sy;
-				sy.Format("%f",_y);
+				//CString sx;
+				//sx.Format("%f",_x);
+				//CString sy;
+				//sy.Format("%f",_y);
+
+				std::string sx, sy;
+				sx = shxUtils::string_format("%f", _x);
+				sy = shxUtils::string_format("%f", _y);
 
 				res.append("lineto:");
 				res.append(sx + ",");
@@ -942,235 +957,235 @@ string ShapeFont::Patch(unsigned short charCode,float orgX,float orgY,float scX,
 	return res;
 }
 
-
-void ShapeFont::Display(CDC* pDC,unsigned short charCode,int orgX,int orgY)
-{
-	fontchrlink* link= GetFromCode(charCode);
-	if(link==NULL)
-		return;//找不到字体
-	short vertonly,gotdxdy,circ,genpc,arcmode;
-	//开始解析字体
-	Point2D org(orgX,orgY);
-	short pendown=1; 
-	short skip=0;
-	bool done=false;
-	bool cw=false;
-	short cmdcode=0;
-	double dx=0;
-	double dy=0;
-	short repmode=0;  /* 0, 9, or 13 (the repeating commands) */
-	short fi1;
-	double bulge=0;
-	short forcependown=1;
-	double vfactx=1;
-	double vfacty=1;
-	double rad=0;	
-	int psidx=0;
-	int pssz=100;
-	Point2D pts[102];//数据
-	Point2D curpt(300,300);
-	Point2D ap1;
-	Point2D endpt;
-	int npt=0;
-	for (int didx=0;!done;didx++)
-	{
-		if(didx>=link->defsz) done=true;
-		vertonly=gotdxdy=circ=genpc=0; arcmode=-1;
-
-		if(!done)
-		{
-			if (repmode) {
-				if (++didx<link->defsz) {
-					if (!link->def[didx-1] && !link->def[didx]) repmode=0;
-					if (repmode==9) {
-						if (!skip) {
-							dx=link->def[didx-1];
-							dy=link->def[didx];
-							gotdxdy=1;
-						}
-					} 
-					else if (repmode==13) {
-						if (++didx<link->defsz && !skip) {
-							arcmode=1;  
-							dx=link->def[didx-2];
-							dy=link->def[didx-1];
-							fi1=link->def[didx];
-							if(fi1>127)fi1=127;
-							else if(fi1<-127)fi1=-127;						
-							bulge=fi1/127.0;
-						}
-					}
-				}
-
-			}
-			else
-			{
-				cmdcode=(forcependown) ? 1 : link->def[didx];
-				switch (cmdcode) {
-				case  0:  /* End 结束*/
-					if (skip) break;
-					didx=link->defsz;  /* Trigger a "done" */
-					break;
-				case  1:  /* Pen down 下笔 */
-					/* If we're doing a forced pendown, decrement */
-					/* ccs->didx so that we don't eat a def byte: */
-					if (forcependown) {
-						didx--;
-						forcependown=0;
-					}
-					if (skip) break;
-					npt=1;
-					pendown=1; dx=dy=0.0; gotdxdy=1;
-					break;
-
-				case  2:  /* Pen up 起笔*/
-					if (skip || !pendown) break;
-					pendown=0;
-					genpc=1;
-					npt=0;
-					break;
-
-				case  3:  /* Divide vector lengths by next byte 缩小 */
-					if (++didx>=link->defsz) break;
-					if (skip) break;
-					if (!link->def[didx]) break;							
-					vfactx/=((unsigned char)link->def[didx]);
-					vfacty/=((unsigned char)link->def[didx]);
-					// ]- EBATECH(CNBR)
-					break;
-				case  4:  /* Multiply vector lengths by next byte 放大*/
-					if (++didx>=link->defsz) break;
-					if (skip) break;
-					if (!link->def[didx]) break;
-					// EBATECH(CNBR) ]- for extended subshapes
-					//vfact*=((unsigned char)ccs->thisfontchr->def[ccs->didx]);
-					vfactx*=((unsigned char)link->def[didx]);
-					vfacty*=((unsigned char)link->def[didx]);
-					// ]- EBATECH(CNBR)
-					break;
-				case  5:  /* Push position 压入堆栈点*/
-					if (skip || psidx>pssz) break;
-					psidx++;
-					pts[psidx]=curpt;						
-					break;
-				case  6:  /* Pop position 出堆栈*/
-					/*
-					**  Okay.  The code's getting a little bizarre
-					**  as I keep patching problems.
-					**
-					**  Pop needs to lift the pen, move, and
-					**  then restore the pen to its original
-					**  status.  We can do all of this by
-					**  popping the position, setting
-					**  ccs->forcependown if the pen is
-					**  currently down, and doing the guts of
-					**  the penup command (case 2),.  (See the
-					**  processing code below the end of this
-					**  "else" and the forcependown code above.)
-					*/
-
-					if (skip || psidx<0) break;
-					/* Pop curpt: */
-					curpt=pts[psidx];							
-					dx=dy=0.0; psidx--; gotdxdy=1;
-					/* Set css->forcependown if it's currently down: 如果是下笔状态，给予向前动力*/
-					forcependown=(pendown!=0);
-					/* Do a penup command: 起笔*/
-					pendown=0; genpc=1;
-					break;
-
-				case 7:/* Subshape 嵌套子对象 */
-					{//TODO:
-
-					}
-					break;
-				case  8:  /* dx,dy in next 2 bytes 坐标偏移*/
-					if ((didx+=2)>=link->defsz) break;
-					if (skip) break;
-					dx=(double)link->def[didx-1];
-					dy=(double)link->def[didx];
-					gotdxdy=1;
-					break;
-				case  9: 
-				case 13:  /* Repeat until (0,0) 重复 */
-					repmode=link->def[didx];
-					break;
-
-				case 10:  /* Octant arc (next 2 bytes) 2字节圆弧*/
-					{
-
-					}
-					break;
-				case 11:  /* Fractional arc (next 5 bytes) y 5字节圆弧*/
-
-					/* See documentation in learned.doc for this one; */
-					/* ACAD's documentation is incorrect and */
-					/* insufficient. */
-					{
-
-					}
-					break;
-
-				case 12:  /* Arc by bulge (next 3 bytes) 3字节圆弧*/
-					{
-
-					}
-					break;
-				case 14:  /* Process next command only for vertical text 垂直字体*/
-					vertonly=1;
-					break;
-				case 15:  /* Not used 保留*/
-					break;
-
-				default:  /* Vector/direction 矢量*/
-					if (skip) break;
-					unsigned char vlen=(unsigned char)link->def[didx];
-					char vdir=vlen&'\x0F';
-					if (!(vlen>>=4)) break;
-					switch (vdir) {
-					case '\x00': dx= 1.0; dy= 0.0; break;
-					case '\x01': dx= 1.0; dy= 0.5; break;
-					case '\x02': dx= 1.0; dy= 1.0; break;
-					case '\x03': dx= 0.5; dy= 1.0; break;
-					case '\x04': dx= 0.0; dy= 1.0; break;
-					case '\x05': dx=-0.5; dy= 1.0; break;
-					case '\x06': dx=-1.0; dy= 1.0; break;
-					case '\x07': dx=-1.0; dy= 0.5; break;
-					case '\x08': dx=-1.0; dy= 0.0; break;
-					case '\x09': dx=-1.0; dy=-0.5; break;
-					case '\x0A': dx=-1.0; dy=-1.0; break;
-					case '\x0B': dx=-0.5; dy=-1.0; break;
-					case '\x0C': dx= 0.0; dy=-1.0; break;
-					case '\x0D': dx= 0.5; dy=-1.0; break;
-					case '\x0E': dx= 1.0; dy=-1.0; break;
-					case '\x0F': dx= 1.0; dy=-0.5; break;
-					}
-					dx*=vlen; dy*=vlen; gotdxdy=1;
-					break;
-				}
-
-			}		
-
-			if (gotdxdy || arcmode>-1) {  /* Process vector or arc cmd 开始处理 矢量或圆弧*/
-
-				endpt.X=curpt.X+ dx*vfactx;
-				endpt.Y= curpt.Y- dy*vfacty;
-				if(pendown)
-				{
-					if(npt==1)
-						pDC->MoveTo(endpt.X+org.X,endpt.Y+org.Y);
-					else if(npt>1)
-						pDC->LineTo(endpt.X+org.X,endpt.Y+org.Y);
-					npt++;
-				}
-				curpt=endpt;
-			}
-		}
-
-
-	}
-
-}
+//
+//void ShapeFont::Display(CDC* pDC,unsigned short charCode,int orgX,int orgY)
+//{
+//	fontchrlink* link= GetFromCode(charCode);
+//	if(link==NULL)
+//		return;//找不到字体
+//	short vertonly,gotdxdy,circ,genpc,arcmode;
+//	//开始解析字体
+//	Point2D org(orgX,orgY);
+//	short pendown=1; 
+//	short skip=0;
+//	bool done=false;
+//	bool cw=false;
+//	short cmdcode=0;
+//	double dx=0;
+//	double dy=0;
+//	short repmode=0;  /* 0, 9, or 13 (the repeating commands) */
+//	short fi1;
+//	double bulge=0;
+//	short forcependown=1;
+//	double vfactx=1;
+//	double vfacty=1;
+//	double rad=0;	
+//	int psidx=0;
+//	int pssz=100;
+//	Point2D pts[102];//数据
+//	Point2D curpt(300,300);
+//	Point2D ap1;
+//	Point2D endpt;
+//	int npt=0;
+//	for (int didx=0;!done;didx++)
+//	{
+//		if(didx>=link->defsz) done=true;
+//		vertonly=gotdxdy=circ=genpc=0; arcmode=-1;
+//
+//		if(!done)
+//		{
+//			if (repmode) {
+//				if (++didx<link->defsz) {
+//					if (!link->def[didx-1] && !link->def[didx]) repmode=0;
+//					if (repmode==9) {
+//						if (!skip) {
+//							dx=link->def[didx-1];
+//							dy=link->def[didx];
+//							gotdxdy=1;
+//						}
+//					} 
+//					else if (repmode==13) {
+//						if (++didx<link->defsz && !skip) {
+//							arcmode=1;  
+//							dx=link->def[didx-2];
+//							dy=link->def[didx-1];
+//							fi1=link->def[didx];
+//							if(fi1>127)fi1=127;
+//							else if(fi1<-127)fi1=-127;						
+//							bulge=fi1/127.0;
+//						}
+//					}
+//				}
+//
+//			}
+//			else
+//			{
+//				cmdcode=(forcependown) ? 1 : link->def[didx];
+//				switch (cmdcode) {
+//				case  0:  /* End 结束*/
+//					if (skip) break;
+//					didx=link->defsz;  /* Trigger a "done" */
+//					break;
+//				case  1:  /* Pen down 下笔 */
+//					/* If we're doing a forced pendown, decrement */
+//					/* ccs->didx so that we don't eat a def byte: */
+//					if (forcependown) {
+//						didx--;
+//						forcependown=0;
+//					}
+//					if (skip) break;
+//					npt=1;
+//					pendown=1; dx=dy=0.0; gotdxdy=1;
+//					break;
+//
+//				case  2:  /* Pen up 起笔*/
+//					if (skip || !pendown) break;
+//					pendown=0;
+//					genpc=1;
+//					npt=0;
+//					break;
+//
+//				case  3:  /* Divide vector lengths by next byte 缩小 */
+//					if (++didx>=link->defsz) break;
+//					if (skip) break;
+//					if (!link->def[didx]) break;							
+//					vfactx/=((unsigned char)link->def[didx]);
+//					vfacty/=((unsigned char)link->def[didx]);
+//					// ]- EBATECH(CNBR)
+//					break;
+//				case  4:  /* Multiply vector lengths by next byte 放大*/
+//					if (++didx>=link->defsz) break;
+//					if (skip) break;
+//					if (!link->def[didx]) break;
+//					// EBATECH(CNBR) ]- for extended subshapes
+//					//vfact*=((unsigned char)ccs->thisfontchr->def[ccs->didx]);
+//					vfactx*=((unsigned char)link->def[didx]);
+//					vfacty*=((unsigned char)link->def[didx]);
+//					// ]- EBATECH(CNBR)
+//					break;
+//				case  5:  /* Push position 压入堆栈点*/
+//					if (skip || psidx>pssz) break;
+//					psidx++;
+//					pts[psidx]=curpt;						
+//					break;
+//				case  6:  /* Pop position 出堆栈*/
+//					/*
+//					**  Okay.  The code's getting a little bizarre
+//					**  as I keep patching problems.
+//					**
+//					**  Pop needs to lift the pen, move, and
+//					**  then restore the pen to its original
+//					**  status.  We can do all of this by
+//					**  popping the position, setting
+//					**  ccs->forcependown if the pen is
+//					**  currently down, and doing the guts of
+//					**  the penup command (case 2),.  (See the
+//					**  processing code below the end of this
+//					**  "else" and the forcependown code above.)
+//					*/
+//
+//					if (skip || psidx<0) break;
+//					/* Pop curpt: */
+//					curpt=pts[psidx];							
+//					dx=dy=0.0; psidx--; gotdxdy=1;
+//					/* Set css->forcependown if it's currently down: 如果是下笔状态，给予向前动力*/
+//					forcependown=(pendown!=0);
+//					/* Do a penup command: 起笔*/
+//					pendown=0; genpc=1;
+//					break;
+//
+//				case 7:/* Subshape 嵌套子对象 */
+//					{//TODO:
+//
+//					}
+//					break;
+//				case  8:  /* dx,dy in next 2 bytes 坐标偏移*/
+//					if ((didx+=2)>=link->defsz) break;
+//					if (skip) break;
+//					dx=(double)link->def[didx-1];
+//					dy=(double)link->def[didx];
+//					gotdxdy=1;
+//					break;
+//				case  9: 
+//				case 13:  /* Repeat until (0,0) 重复 */
+//					repmode=link->def[didx];
+//					break;
+//
+//				case 10:  /* Octant arc (next 2 bytes) 2字节圆弧*/
+//					{
+//
+//					}
+//					break;
+//				case 11:  /* Fractional arc (next 5 bytes) y 5字节圆弧*/
+//
+//					/* See documentation in learned.doc for this one; */
+//					/* ACAD's documentation is incorrect and */
+//					/* insufficient. */
+//					{
+//
+//					}
+//					break;
+//
+//				case 12:  /* Arc by bulge (next 3 bytes) 3字节圆弧*/
+//					{
+//
+//					}
+//					break;
+//				case 14:  /* Process next command only for vertical text 垂直字体*/
+//					vertonly=1;
+//					break;
+//				case 15:  /* Not used 保留*/
+//					break;
+//
+//				default:  /* Vector/direction 矢量*/
+//					if (skip) break;
+//					unsigned char vlen=(unsigned char)link->def[didx];
+//					char vdir=vlen&'\x0F';
+//					if (!(vlen>>=4)) break;
+//					switch (vdir) {
+//					case '\x00': dx= 1.0; dy= 0.0; break;
+//					case '\x01': dx= 1.0; dy= 0.5; break;
+//					case '\x02': dx= 1.0; dy= 1.0; break;
+//					case '\x03': dx= 0.5; dy= 1.0; break;
+//					case '\x04': dx= 0.0; dy= 1.0; break;
+//					case '\x05': dx=-0.5; dy= 1.0; break;
+//					case '\x06': dx=-1.0; dy= 1.0; break;
+//					case '\x07': dx=-1.0; dy= 0.5; break;
+//					case '\x08': dx=-1.0; dy= 0.0; break;
+//					case '\x09': dx=-1.0; dy=-0.5; break;
+//					case '\x0A': dx=-1.0; dy=-1.0; break;
+//					case '\x0B': dx=-0.5; dy=-1.0; break;
+//					case '\x0C': dx= 0.0; dy=-1.0; break;
+//					case '\x0D': dx= 0.5; dy=-1.0; break;
+//					case '\x0E': dx= 1.0; dy=-1.0; break;
+//					case '\x0F': dx= 1.0; dy=-0.5; break;
+//					}
+//					dx*=vlen; dy*=vlen; gotdxdy=1;
+//					break;
+//				}
+//
+//			}		
+//
+//			if (gotdxdy || arcmode>-1) {  /* Process vector or arc cmd 开始处理 矢量或圆弧*/
+//
+//				endpt.X=curpt.X+ dx*vfactx;
+//				endpt.Y= curpt.Y- dy*vfacty;
+//				if(pendown)
+//				{
+//					if(npt==1)
+//						pDC->MoveTo(endpt.X+org.X,endpt.Y+org.Y);
+//					else if(npt>1)
+//						pDC->LineTo(endpt.X+org.X,endpt.Y+org.Y);
+//					npt++;
+//				}
+//				curpt=endpt;
+//			}
+//		}
+//
+//
+//	}
+//
+//}
 
 
 short getfontval(char **lpp) {

@@ -1,4 +1,6 @@
 #pragma once
+#include <stdio.h>
+#include <assert.h>
 
 #include <algorithm>
 #include <vector>
@@ -14,19 +16,21 @@ class xStream;
 template<class T>
 class xArray : public std::vector<T>
 {
+    typedef const T& const_reference;
+    typedef T& reference;
+
 public:
     const_reference At(int i) const
-    {
-		
-	ASSERT(i >= 0 && i < Count()); 
-        return begin()[i]; 
+    {		
+	    assert(i >= 0 && i < Count()); 
+        return this->begin()[i]; 
     }
 
     reference At(int i)        
     {
        
-		ASSERT(i >= 0 && i < Count()); 
-        return begin()[i]; 
+        assert(i >= 0 && i < Count());
+        return this->begin()[i];
     }
 
     const_reference operator[](int i) const    
@@ -46,17 +50,17 @@ public:
 
     void Append(const xArray<T>& src)
     { 
-        insert(end(), src.begin(), src.end());
+        this->insert(this->end(), src.begin(), src.end());
     }
 
     void InsertAt(int i, const T& arg) 
     { 
-        insert(begin()+i, arg);
+        this->insert(this->begin()+i, arg);
     }
 
     void RemoveAt(int i)        
     { 
-        erase(begin()+i);
+        this->erase(this->begin()+i);
     }
 
     //是否可以添加，比如对于图层类，是不允许名字重复的
@@ -64,7 +68,7 @@ public:
     {
         if(CanAdd(arg))
         {
-            push_back(arg);
+            this->push_back(arg);
         }
     }
 
@@ -76,7 +80,7 @@ public:
     void AddRange(const xArray<T>& arg)        
     {
         int count = arg.Count();
-        const_iterator p = arg.begin();
+        auto p = arg.begin();
         for (int i = 0; i < count; i++)
         {
             Add(*p);
@@ -86,12 +90,12 @@ public:
 
     int Count() const
     {
-        return (int)size();
+        return (int)this->size();
     }
 
     void Clear()
     {
-        clear();
+        this->clear();
     }
 
     /*
@@ -117,7 +121,7 @@ public:
     int Find(const T& arg) const
     {
         int count = Count();
-        const_iterator p = begin();
+        auto p = this->begin();
         for (int rtv = 0; rtv < count; rtv++, p++)
         {
             if((*p) == arg)
@@ -129,10 +133,10 @@ public:
     /*
     * return true if p is in PtrArray & delete successfully
     */
-    BOOL Remove(const T& arg)
+    bool Remove(const T& arg)
     {
         int count = Count();
-        iterator p = begin();
+        auto p = this->begin();
         for (int i = 0; i < count; i++, p++)
         {
             if((*p) == arg)
@@ -150,7 +154,7 @@ public:
     int Replace(const T& oldVal, const T& newVal)
     {
         int rtv = 0;
-        iterator p = begin();
+        auto p = this->begin();
         int count = Count();
         for (int i = 0; i < count; i++, p++)
         {
@@ -225,7 +229,7 @@ public:
     *                         如果设置为NULL后，可以统一调用purge()将所有为NULL的元素从数组中删除
     */
 
-    void RemoveAt(int index, BOOL isSetNullOnly = false)
+    void RemoveAt(int index, bool isSetNullOnly = false)
     {
         delete (*this)[index];
         if(isSetNullOnly)
@@ -251,7 +255,7 @@ public:
     void Sort()        {  std::sort(begin(), end()); }
     void SortDesc()    {  std::sort(begin(), end(), _greator); }
 
-    static BOOL _greator(int e, int arg)    {  return arg < e; }
+    static bool _greator(int e, int arg)    {  return arg < e; }
 };
 
 class Doubles : public xArray<double>
@@ -260,5 +264,5 @@ public:
     void Sort()        {  std::sort(begin(), end()); }
     void SortDesc()    {  std::sort(begin(), end(), _greator); }
 
-    static BOOL _greator(double e, double arg)    {  return arg < e; }
+    static bool _greator(double e, double arg)    {  return arg < e; }
 };

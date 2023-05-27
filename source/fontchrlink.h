@@ -17,10 +17,4 @@ public:
 	~fontchrlink(void);
 	//把字体信息转换为矢量字体
 	bool ShapeCreateVec(CharData* pOut);
-	static long	gr_parsetext(                       // R:  Unicode of character of control code
-		_TCHAR**                cpp,    // IO: String of text that should be parsed
-		UINT                    dwg_code_page,  // for converting from multibyte to Unicode
-		FontType   type,    // I:  Font type. May be: SHAPE_1_0, SHAPE_1_1, UNIFONT, BIGFONT, TRUETYPE
-		TTF_table* pFontTable
-		);
 };

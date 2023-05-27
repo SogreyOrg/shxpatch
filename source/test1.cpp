@@ -7,17 +7,18 @@
 int _tmain(int argc, _TCHAR* argv[])
 {
 	ShapeFont* m_font = new ShapeFont();
-	if(m_font->Load("HT.SHX")){
+	if(m_font->Load("../shxfont/HT.SHX")){
 		printf("已打开");
 		printf("%i",m_font->Count());//字库包含多少字符
 		//开始获得路径 例 '好' 字
 		CString str("好");
+		//std::string str("好");
 		//获得 '好' 字编码
 		char* kk=str.GetBuffer(0);
-		wchar_t buf1[100];
-		char key[8];
-		MultiByteToWideChar(CP_OEMCP,0,str.GetBuffer(0),6,buf1,100);
-		WideCharToMultiByte(932,0,buf1,3,key,6,NULL,NULL);
+		//wchar_t buf1[100];
+		//char key[8];
+		//MultiByteToWideChar(CP_OEMCP,0,str.GetBuffer(0),6,buf1,100);
+		//WideCharToMultiByte(932,0,buf1,3,key,6,NULL,NULL);
 		unsigned short k1;
 		memcpy(&k1,&kk[0],2);
 		//获得shx字体路径

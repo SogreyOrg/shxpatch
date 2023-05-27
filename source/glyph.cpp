@@ -164,7 +164,9 @@ TTF_table::FindGlyph(   // R: Glyph index (0 if it fails)
 #define GSUB (*((unsigned long *) "GSUB"))      // Glyph substitution tag
 #define VERT (*((unsigned long *) "vert"))      // Vertical printing tag
 
-//
+#define FALSE false
+#define TRUE true
+
 //  Macro used for addressing within the TrueType font structure.  This calucates and address from
 //  the base of one structure and casts the result to the final type.  Note the offset can only
 //  be short, since the swap is done here.

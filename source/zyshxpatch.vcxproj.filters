@@ -42,6 +42,12 @@
     <ClInclude Include="Array.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="shxUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="h\tchar.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
